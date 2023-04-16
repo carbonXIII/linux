@@ -2315,6 +2315,7 @@ static int ov5640_set_mode(struct ov5640_dev *sensor)
 	bool auto_gain = sensor->ctrls.auto_gain->val == 1;
 	bool auto_exp =  sensor->ctrls.auto_exp->val == V4L2_EXPOSURE_AUTO;
 	int ret;
+	u8 tmp;
 
 	dn_mode = mode->dn_mode;
 	orig_dn_mode = orig_mode->dn_mode;
@@ -2376,6 +2377,22 @@ static int ov5640_set_mode(struct ov5640_dev *sensor)
 		return ret;
 	ret = ov5640_set_virtual_channel(sensor);
 	if (ret < 0)
+		return ret;
+
+	ret = ov5640_read_reg(sensor, 0x5308, &tmp);
+	if (ret)
+		return ret;
+
+	ret = ov5640_write_reg(sensor, 0x5308, tmp | 0x10 | 0x40);
+	if (ret)
+		return ret;
+
+	ret = ov5640_write_reg(sensor, 0x5306, 0);
+	if (ret)
+		return ret;
+
+	ret = ov5640_write_reg(sensor, 0x5302, 0);
+	if (ret)
 		return ret;
 
 	sensor->pending_mode_change = false;
@@ -2486,6 +2503,7 @@ static void ov5640_set_power_off(struct ov5640_dev *sensor)
 	ov5640_power(sensor, false);
 	regulator_bulk_disable(OV5640_NUM_SUPPLIES, sensor->supplies);
 	clk_disable_unprepare(sensor->xclk);
+	msleep(100);
 }
 
 static int ov5640_set_power_mipi(struct ov5640_dev *sensor, bool on)
@@ -3501,6 +3519,7 @@ static int ov5640_init_controls(struct ov5640_dev *sensor)
 	ctrls->pixel_rate->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 	ctrls->link_freq->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 	ctrls->hblank->flags |= V4L2_CTRL_FLAG_READ_ONLY;
+	ctrls->vblank->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 	ctrls->gain->flags |= V4L2_CTRL_FLAG_VOLATILE;
 	ctrls->exposure->flags |= V4L2_CTRL_FLAG_VOLATILE;
 
@@ -3822,7 +3841,7 @@ static int ov5640_probe(struct i2c_client *client)
 	sensor->current_link_freq =
 		ov5640_csi2_link_freqs[OV5640_DEFAULT_LINK_FREQ];
 
-	sensor->ae_target = 52;
+	sensor->ae_target = 28;
 
 	endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(&client->dev),
 						  NULL);

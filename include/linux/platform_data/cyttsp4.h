@@ -21,42 +21,52 @@
 
 #define CY_TOUCH_SETTINGS_MAX 32
 
-struct touch_framework {
-	const uint16_t  *abs;
-	uint8_t         size;
-	uint8_t         enable_vkeys;
-} __packed;
-
-struct cyttsp4_mt_platform_data {
-	struct touch_framework *frmwrk;
-	unsigned short flags;
-	char const *inp_dev_name;
+/* abs axis signal offsets in the signals array  */
+enum cyttsp4_sig_ost {
+	CY_ABS_X_OST,
+	CY_ABS_Y_OST,
+	CY_ABS_P_OST,
+	CY_ABS_W_OST,
+	CY_ABS_ID_OST,
+	CY_ABS_MAJ_OST,
+	CY_ABS_MIN_OST,
+	CY_ABS_OR_OST,
+	CY_NUM_ABS_OST	/* number of abs signals */
 };
 
-struct touch_settings {
-	const uint8_t *data;
-	uint32_t size;
-	uint8_t tag;
-} __packed;
+struct cyttsp4_virtual_key {
+	int code;
+};
 
-struct cyttsp4_core_platform_data {
-	int irq_gpio;
-	int rst_gpio;
-	int level_irq_udelay;
-	int (*xres)(struct cyttsp4_core_platform_data *pdata,
-		struct device *dev);
-	int (*init)(struct cyttsp4_core_platform_data *pdata,
-		int on, struct device *dev);
-	int (*power)(struct cyttsp4_core_platform_data *pdata,
-		int on, struct device *dev, atomic_t *ignore_irq);
-	int (*irq_stat)(struct cyttsp4_core_platform_data *pdata,
-		struct device *dev);
-	struct touch_settings *sett[CY_TOUCH_SETTINGS_MAX];
+struct cyttsp4_signal_def {
+	int signal;
+	int min;
+	int max;
+	int fuzz;
+	int flat;
 };
 
 struct cyttsp4_platform_data {
-	struct cyttsp4_core_platform_data *core_pdata;
-	struct cyttsp4_mt_platform_data *mt_pdata;
+	char const *inp_dev_name;
+	unsigned short flags;
+
+	int irq_gpio;
+	int rst_gpio;
+	int level_irq_udelay;
+	int (*xres)(struct cyttsp4_platform_data *pdata,
+		struct device *dev);
+	int (*init)(struct cyttsp4_platform_data *pdata,
+		int on, struct device *dev);
+	int (*power)(struct cyttsp4_platform_data *pdata,
+		int on, struct device *dev, atomic_t *ignore_irq);
+	int (*irq_stat)(struct cyttsp4_platform_data *pdata,
+		struct device *dev);
+
+	int n_signals;
+	struct cyttsp4_signal_def *signals;
+
+	int n_keys;
+	struct cyttsp4_virtual_key* keys;
 };
 
 #endif /* _CYTTSP4_H_ */
