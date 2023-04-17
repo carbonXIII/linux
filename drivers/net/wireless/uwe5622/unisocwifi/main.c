@@ -1452,7 +1452,7 @@ static struct sprdwl_vif *sprdwl_register_netdev(struct sprdwl_priv *priv,
 #endif
 
 	/* register new Ethernet interface */
-	ret = register_netdevice(ndev);
+	ret = cfg80211_register_netdevice(ndev);
 	if (ret) {
 		wl_ndev_log(L_ERR, ndev, "failed to regitster netdev(%d)!\n", ret);
 		goto err;
@@ -1474,7 +1474,7 @@ static void sprdwl_unregister_netdev(struct sprdwl_vif *vif)
 	if (vif->priv->fw_capa & SPRDWL_CAPA_MC_FILTER)
 		kfree(vif->mc_filter);
 	sprdwl_deinit_vif(vif);
-	unregister_netdevice(vif->ndev);
+	cfg80211_unregister_netdevice(vif->ndev);
 }
 
 struct wireless_dev *sprdwl_add_iface(struct sprdwl_priv *priv,
@@ -1672,4 +1672,3 @@ MODULE_PARM_DESC(tcp_ack_drop_enable, "valid values: [0, 1]");
 #else
 const unsigned int tcp_ack_drop_enable;
 #endif
-
